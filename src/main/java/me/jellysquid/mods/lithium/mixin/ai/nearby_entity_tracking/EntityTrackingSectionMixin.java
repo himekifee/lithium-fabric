@@ -1,9 +1,11 @@
 package me.jellysquid.mods.lithium.mixin.ai.nearby_entity_tracking;
 
+import com.google.common.collect.MapMaker;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import me.jellysquid.mods.lithium.common.entity.PositionedEntityTrackingSection;
 import me.jellysquid.mods.lithium.common.entity.nearby_tracker.NearbyEntityListener;
 import me.jellysquid.mods.lithium.common.entity.nearby_tracker.NearbyEntityListenerSection;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.collection.TypeFilterableList;
 import net.minecraft.world.entity.EntityLike;
@@ -19,6 +21,9 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+
 @Mixin(EntityTrackingSection.class)
 public abstract class EntityTrackingSectionMixin<T extends EntityLike> implements NearbyEntityListenerSection, PositionedEntityTrackingSection {
     @Shadow
@@ -30,7 +35,16 @@ public abstract class EntityTrackingSectionMixin<T extends EntityLike> implement
     @Shadow
     public abstract boolean isEmpty();
 
-    private final ReferenceOpenHashSet<NearbyEntityListener> nearbyEntityListeners = new ReferenceOpenHashSet<>(0);
+    private final Set<NearbyEntityListener> nearbyEntityListeners;
+
+    public EntityTrackingSectionMixin() {
+        if (FabricLoader.getInstance().isModLoaded("mcmtfabric")) {
+            ConcurrentMap<NearbyEntityListener, Object> tmp = new MapMaker().weakKeys().makeMap();
+            nearbyEntityListeners = tmp.keySet();
+        } else {
+            nearbyEntityListeners = new ReferenceOpenHashSet<>(0);
+        }
+    }
 
     @Override
     public void addListener(NearbyEntityListener listener) {

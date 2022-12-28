@@ -1,16 +1,24 @@
 package me.jellysquid.mods.lithium.common.world.listeners;
 
+import com.google.common.collect.MapMaker;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.border.WorldBorderListener;
 
+import java.util.Map;
 import java.util.WeakHashMap;
 
 public class WorldBorderListenerOnceMulti implements WorldBorderListener {
 
-    private final WeakHashMap<WorldBorderListenerOnce, Object> delegate;
+    private final Map<WorldBorderListenerOnce, Object> delegate;
 
     public WorldBorderListenerOnceMulti() {
-        this.delegate = new WeakHashMap<>();
+        if (FabricLoader.getInstance().isModLoaded("mcmtfabric")) {
+            delegate = new MapMaker().weakKeys().makeMap();
+        } else {
+            delegate = new WeakHashMap<>();
+        }
     }
 
     public void add(WorldBorderListenerOnce listener) {

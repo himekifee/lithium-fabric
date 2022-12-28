@@ -1,9 +1,11 @@
 package me.jellysquid.mods.lithium.mixin.chunk.entity_class_groups;
 
+import com.google.common.collect.MapMaker;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import me.jellysquid.mods.lithium.common.entity.EntityClassGroup;
 import me.jellysquid.mods.lithium.common.world.chunk.ClassGroupFilterableList;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.collection.TypeFilterableList;
 import org.spongepowered.asm.mixin.Final;
@@ -26,8 +28,15 @@ public abstract class TypeFilterableListMixin<T> implements ClassGroupFilterable
     @Final
     private List<T> allElements;
 
-    private final Reference2ReferenceArrayMap<EntityClassGroup, ReferenceLinkedOpenHashSet<T>> entitiesByGroup =
-            new Reference2ReferenceArrayMap<>();
+    private final Map<EntityClassGroup, ReferenceLinkedOpenHashSet<T>> entitiesByGroup;
+
+    public TypeFilterableListMixin(List<T> allElements) {
+        if (FabricLoader.getInstance().isModLoaded("mcmtfabric")) {
+            entitiesByGroup = new MapMaker().weakKeys().makeMap();
+        } else {
+            entitiesByGroup = new Reference2ReferenceArrayMap<>();
+        }
+    }
 
     /**
      * Update our collections

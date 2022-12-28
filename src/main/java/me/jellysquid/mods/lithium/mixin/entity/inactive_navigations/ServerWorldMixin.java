@@ -1,8 +1,10 @@
 package me.jellysquid.mods.lithium.mixin.entity.inactive_navigations;
 
+import com.google.common.collect.MapMaker;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import me.jellysquid.mods.lithium.common.entity.NavigatingEntity;
 import me.jellysquid.mods.lithium.common.world.ServerWorldExtended;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.ai.pathing.EntityNavigation;
 import net.minecraft.entity.mob.MobEntity;
@@ -34,6 +36,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -59,7 +62,7 @@ public abstract class ServerWorldMixin extends World implements ServerWorldExten
     @Final
     Set<MobEntity> loadedMobs;
 
-    private ReferenceOpenHashSet<EntityNavigation> activeNavigations;
+    private Set<EntityNavigation> activeNavigations;
 
     protected ServerWorldMixin(MutableWorldProperties properties, RegistryKey<World> registryRef, RegistryEntry<DimensionType> dimension, Supplier<Profiler> supplier, boolean isClient, boolean debugWorld, long seed, int maxChainedNeighborUpdates) {
         super(properties, registryRef, dimension, supplier, isClient, debugWorld, seed, maxChainedNeighborUpdates);
@@ -86,7 +89,12 @@ public abstract class ServerWorldMixin extends World implements ServerWorldExten
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(MinecraftServer server, Executor workerExecutor, LevelStorage.Session session, ServerWorldProperties properties, RegistryKey worldKey, DimensionOptions dimensionOptions, WorldGenerationProgressListener worldGenerationProgressListener, boolean debugWorld, long seed, List spawners, boolean shouldTickTime, CallbackInfo ci) {
         this.loadedMobs = new ReferenceOpenHashSet<>(this.loadedMobs);
-        this.activeNavigations = new ReferenceOpenHashSet<>();
+        if (FabricLoader.getInstance().isModLoaded("mcmtfabric")) {
+            ConcurrentMap<EntityNavigation, Object> tmp = new MapMaker().weakKeys().makeMap();
+            this.activeNavigations = tmp.keySet();
+        } else {
+            this.activeNavigations = new ReferenceOpenHashSet<>();
+        }
     }
 
     @Override
